@@ -1,0 +1,70 @@
+---
+title: "HW5"
+author: "Milo Tkacik"
+date: "2024-02-29"
+output: html_document
+---
+
+```{r echo=FALSE}
+#Librarying and Reading data
+library(rvest)
+library(sas7bdat)
+library(tibble)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(stringr)
+library(lubridate)
+library(knitr)
+library(mosaic)
+library(boot)
+```
+
+
+###Question 1
+```{r echo=FALSE}
+nflip(n=2021, prob=0.024)
+sim_trades = do(100000)*nflip(n=2021, prob=0.024)
+
+ggplot(sim_trades) + 
+  geom_histogram(aes(x=nflip), binwidth=0.5)
+
+sum(sim_trades >= 70)/100000
+```
+
+
+###Question 2
+```{r echo=FALSE}
+nflip(n=50, prob=0.03)
+sim_inspections = do(100000)*nflip(n=50, prob=0.03)
+
+ggplot(sim_inspections) + 
+  geom_histogram(aes(x=nflip), binwidth=0.5)
+
+sum(sim_inspections >= 8)/100000
+```
+
+
+###Question 3
+```{r echo=FALSE}
+sentences <- readLines("brown_sentences.txt")
+
+invert_shift_cipher <- function(sentences, shift) {
+  # Define the alphabet and the shifted alphabet
+  alphabet <- paste0(LETTERS, collapse = "")
+  shifted_alphabet <- paste0(substring(alphabet, 27 - shift, 26), substring(alphabet, 1, 26 - shift))
+  
+  # Remove non-letters and convert to uppercase for each sentence
+  clean_sentences <- lapply(sentences, function(sentence) {
+    gsub("[^A-Za-z]", "", toupper(sentence))
+  })
+  
+  # Apply the shift cipher inversion to each cleaned sentence
+  inverted_sentences <- lapply(clean_sentences, function(clean_sentence) {
+    chartr(alphabet, shifted_alphabet, clean_sentence)
+  })
+  
+  return(inverted_sentences)
+}
+```
+
