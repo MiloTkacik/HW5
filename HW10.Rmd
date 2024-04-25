@@ -1,0 +1,125 @@
+---
+title: "Homework 10"
+author: "Milo Tkacik"
+date: "2024-04-24"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(rvest)
+library(sas7bdat)
+library(tibble)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(stringr)
+library(lubridate)
+library(knitr)
+library(mosaic)
+library(boot)
+library(tidyverse)
+library(MatchIt)
+
+redline <- read.csv("redlining.csv")
+groceries <- read.csv("groceries.csv")
+```
+
+###Problem 1
+```{r echo=FALSE}
+reg_model <- lm(policies ~ minority + fire + age + income, data = redline)
+reg_coefficients <- coef(reg_model)
+reg_conf_intervals <- confint(reg_model)
+results <- cbind(reg_coefficients, reg_conf_intervals)
+colnames(results) <- c("Estimate", "Lower Bound", "Upper Bound")
+print(results)
+```
+Question: Is there a correlation between the number of FAIR policies and the racial composition of a ZIP code after adjusting for fire, age, and income?
+Approach: To answer this question I made a regression model then formatted the information into a table with a 95% confidence interval. 
+Results: There were generally about 0.0025-0.0142 more FAIR policies in ZIP codes with mostly minorities. This leads me to believe that there is no discrimination from ZIP to ZIP about insurance coverage and FAIR policies. 
+
+###Problem 2
+####Part A
+```{r echo=FALSE}
+#Part A
+groceries <- mutate(groceries, City_Store = paste(City, Store, sep = "_"))
+
+price_by_store <- groceries %>%
+  group_by(City_Store) %>%
+  summarise(Avg_Price = mean(Price))
+
+ggplot(price_by_store, aes(y = City_Store, x = Avg_Price)) +
+  geom_bar(stat = "identity", fill = "yellow") +
+  labs(title = "Average Price of Products Across Different Stores",
+       x = "Average Price ($)",
+       y = "Store") +
+  theme_minimal()
+```
+Average price of grocery products across different stores in Texas.
+
+####Part B
+```{r echo=FALSE}
+#Part B
+stores_per_product <- groceries %>%
+  group_by(Product) %>%
+  summarise(Num_Stores = n_distinct(City_Store))
+
+ggplot(stores_per_product, aes(y = Product, x = Num_Stores)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Stores Selling Each Product",
+       x = "Number of Stores",
+       y = "Product") +
+  theme_minimal()
+```
+Distribution of products sold across different stores in Texas.
+
+####Part C
+```{r echo=FALSE}
+#Part C
+store_model <- lm(Price ~ Product + Type, data = groceries)
+coefficients <- coef(store_model)
+coefficients <- round(coefficients, 2)
+conf_intervals <- confint(store_model)
+conf_intervals <- round(conf_intervals, 2)
+result_table <- cbind(coefficients, conf_intervals)
+colnames(result_table) <- c("Estimate", "Lower Bound", "Upper Bound")
+print(result_table)
+```
+Compared with ordinary grocery stores (like Albertsons, HEB, or Krogers), convenience stores charge somewhere between $0.41 and $0.92 dollars more for the same product. Highend grocery stores charge between $0.33 and $0.41 more, small formats charge $0.17 and $0.27, and naturals charge $0.52-$0.63 more.
+
+####Part D
+```{r echo=FALSE}
+#Part D
+store_model_II <- lm(Price ~ City_Store + Product, data = groceries)
+coefficients_II <- coef(store_model_II)
+coefficients_II <- round(coefficients_II, 2)
+conf_intervals_II <- confint(store_model_II)
+conf_intervals_II <- round(conf_intervals_II, 2)
+result_table_II <- cbind(coefficients_II, conf_intervals_II)
+colnames(result_table_II) <- c("Estimate", "Lower Bound", "Upper Bound")
+print(result_table_II)
+```
+Austin Whole Foods charges the most for products. The average price of products there is $1.03 more than the average price across the board. Houston Walmart charges the least with an average price $0.44 below the average of all stores.
+
+####Part E
+```{r echo=FALSE}
+#Part E
+store_model_IV <- lm(Price ~ Product + Store, data = groceries)
+coefficients_IV <- coef(store_model_IV)
+coefficients_IV <- round(coefficients_IV, 2)
+print(coefficients_IV)
+```
+There is an $0.08 difference between Central Market and H-E-B. Whole Foods is the only other high-end grocery store shown and that is $1.01 more expensive on average than H-E-B. The other grocery stores vary quite a bit. Fiesta and Kroger are $0.05 cheaper, Walmart is $0.34 cheaper, Target is $0.28 more expensive and Albertsons is $0.65 more expensive. This leads me to believe that Central Market charges a similar price for the same items because obviously $0.08 is not a large difference across stores.
+
+```{r echo=FALSE}
+#Part F
+groceries <- mutate(groceries, Income10K = Income / 10000)
+store_model_III <- lm(Price ~ Product + Income10K, data = groceries)
+coefficients_III <- coef(store_model_III)
+coefficients_III <- round(coefficients_III, 2)
+conf_intervals_III <- confint(store_model_III)
+conf_intervals_III <- round(conf_intervals_III, 2)
+result_table_III <- cbind(coefficients_III, conf_intervals_III)
+colnames(result_table_III) <- c("Estimate", "Lower End", "Upper End")
+print(result_table_III)
+```
+
